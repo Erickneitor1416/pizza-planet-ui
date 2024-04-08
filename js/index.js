@@ -10,10 +10,15 @@ function postOrder(order) {
     headers: {
       "Content-Type": "application/json; charset=utf-8",
     },
-  }).then((res) => {
-    showNotification(res.status !== 200);
-    res.json();
-  });
+  })
+    .then((res) => {
+      showNotification(res.status !== 200);
+      res.json();
+    })
+    .catch((error) => {
+      showNotification(true);
+      console.log(error);
+    });
 }
 
 /**
@@ -22,6 +27,7 @@ function postOrder(order) {
 let orderForm = $("#order-form");
 orderForm.submit((event) => {
   let order = getOrderData();
+  console.log(order);
   postOrder(order);
 
   event.preventDefault();
@@ -36,6 +42,10 @@ function getOrderData() {
   $.each($("input[name='ingredients']:checked"), function (el) {
     ingredients.push($(this).val());
   });
+  let beverages = [];
+  $.each($("input[name='beverages']:checked"), function (el) {
+    beverages.push($(this).val());
+  });
 
   return {
     client_name: $("input[name='name']").val(),
@@ -44,6 +54,7 @@ function getOrderData() {
     client_phone: $("input[name='phone']").val(),
     size_id: $("input[name='size']:checked").val(),
     ingredients,
+    beverages,
   };
 }
 
@@ -92,6 +103,16 @@ function fetchOrderSizes() {
     });
 }
 
+function fetchBeverages() {
+  fetch("http://127.0.0.1:5000/beverage/")
+    .then((response) => response.json())
+    .then((beverages) => {
+      let rows = beverages.map((element) => createBeverageTemplate(element));
+      let table = $("#beverages tbody");
+      table.append(rows);
+    });
+}
+
 function createIngredientTemplate(ingredient) {
   let template = $("#ingredients-template")[0].innerHTML;
   return Mustache.render(template, ingredient);
@@ -102,9 +123,15 @@ function createSizeTemplate(size) {
   return Mustache.render(template, size);
 }
 
+function createBeverageTemplate(beverage) {
+  let template = $("#beverages-template")[0].innerHTML;
+  return Mustache.render(template, beverage);
+}
+
 function loadInformation() {
   fetchIngredients();
   fetchOrderSizes();
+  fetchBeverages();
 }
 
 window.onload = loadInformation;
